@@ -37,8 +37,8 @@ with st.sidebar:
         }
     )
 
-SARVAM_API_KEY = st.secrets.get("SARVAM_API_KEY") | os.getenv("SARVAM_API_KEY")
-OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY") | os.getenv("OPENAI_API_KEY")
+SARVAM_API_KEY = st.secrets.get("SARVAM_API_KEY") or os.getenv("SARVAM_API_KEY")
+OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
 
 if selected == "Text to Speech":
     st.title("Text to Speech:")
