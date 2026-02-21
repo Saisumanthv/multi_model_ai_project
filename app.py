@@ -1,6 +1,7 @@
 from ctypes.util import test
 import streamlit as st
-from openai import OpenAI
+import requests
+import json
 from streamlit_option_menu import option_menu
 from sarvamai import SarvamAI
 import base64
@@ -40,17 +41,14 @@ with st.sidebar:
 
 try:
     SARVAM_API_KEY = st.secrets.get("SARVAM_API_KEY")
-    OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY")
 except:
     SARVAM_API_KEY = os.getenv("SARVAM_API_KEY")
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 if selected == "Text to Speech":
     st.title("Text to Speech:")
     # st.write("Convert your text into speech")
     
     sarvam_client = SarvamAI(api_subscription_key=SARVAM_API_KEY,)
-    openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
     col1, col2 = st.columns([3, 1]) 
 
@@ -103,14 +101,24 @@ if selected == "Text to Speech":
         ask_ai_button = st.button("Ask AI", type="primary")
     if ask_ai_button:
         if user_query:
-            ai_response = openai_client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
+            url = "https://api.sarvam.ai/v1/chat/completions"
+            headers = {
+                "api-subscription-key": SARVAM_API_KEY,
+                "Content-Type": "application/json"
+            }
+            data = {
+                "messages": [
                     {"role": "system", "content": "You'll be acting as a helpful assistant and provide the response for the queries, this response is later given to Sarvam AI and the speech is generated with the response you've given. So, give me the response in a way any TTS AI can convert this to Speech easily. That's why don't use any emojis, logos, symbols etc,."},
                     {"role": "user", "content": user_query}
-                ]
-            )
-            text_response = ai_response.choices[0].message.content
+                ],
+                "model": "sarvam-m"
+            }
+            text_response = requests.post(url, headers=headers, json=data)
+            text_response = text_response.json()
+            try:
+                text_response = text_response['choices'][0]['message']['content']
+            except (KeyError, IndexError):
+                text_response = "I'm sorry, I couldn't generate a response."
 
             audio_response = sarvam_client.text_to_speech.convert(
                 text=text_response,
